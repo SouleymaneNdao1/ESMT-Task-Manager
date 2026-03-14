@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Mon Profil{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <div class="glass p-8 rounded-3xl mb-8">
+        <div class="flex items-center gap-6 mb-8">
+            <div class="w-24 h-24 rounded-full bg-gradient-to-tr from-blue-600 to-teal-400 p-1">
+                {% if user.avatar %}
+                    <img src="{{ user.get_avatar_url }}" alt="Avatar" class="w-full h-full rounded-full object-cover border-2 border-[#0a192f]">
+                {% else %}
+                    <div class="w-full h-full rounded-full bg-[#0a192f] flex items-center justify-center text-3xl font-bold">
+                        {{ user.username|first|upper }}
+                    </div>
+                {% endif %}
+            </div>
+            <div>
+                <h2 class="text-3xl font-bold">{{ user.get_nom_complet|default:user.username }}</h2>
+                <p class="text-teal-400 font-medium">{{ user.role }}</p>
+                <p class="text-gray-500 text-sm italic">{{ user.departement|default:"Département non spécifié" }}</p>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 gap-6">
+            <div class="bg-white/5 p-4 rounded-xl">
+                <p class="text-xs font-bold text-gray-500 uppercase mb-1">Email</p>
+                <p class="text-white">{{ user.email }}</p>
+            </div>
+            <div class="bg-white/5 p-4 rounded-xl">
+                <p class="text-xs font-bold text-gray-500 uppercase mb-1">Bio</p>
+                <p class="text-white">{{ user.bio|default:"Aucune biographie." }}</p>
+            </div>
+        </div>
+
+        <div class="mt-10 flex gap-4">
+            <button class="esmt-blue text-white px-6 py-2 rounded-lg font-bold hover:brightness-110 transition">
+                Modifier le profil
+            </button>
+            <button class="glass px-6 py-2 rounded-lg font-bold hover:bg-white/10 transition">
+                Changer le mot de passe
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}

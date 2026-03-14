@@ -1,0 +1,257 @@
+<!-- ============================================================
+  ESMT Task Manager - Page des Statistiques
+  Statistiques trimestrielles, annuelles et primes
+============================================================ -->
+
+<div class="stats-page">
+
+  <!-- En-tête de la page -->
+  <div class="page-header">
+    <div>
+      <h1>Statistiques</h1>
+      <p>Suivez la progression et les performances</p>
+    </div>
+    <!-- Filtres période -->
+    <div class="periode-filtres">
+      <select class="filtre-select" [(ngModel)]="anneeSelectionnee" (change)="chargerStats()">
+        <option *ngFor="let annee of annees" [value]="annee">{{ annee }}</option>
+      </select>
+      <select class="filtre-select" [(ngModel)]="trimestreSelectionne" (change)="chargerStatsTrimestriel()">
+        <option [value]="1">T1 - Jan/Mar</option>
+        <option [value]="2">T2 - Avr/Juin</option>
+        <option [value]="3">T3 - Juil/Sep</option>
+        <option [value]="4">T4 - Oct/Déc</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Chargement -->
+  <div class="chargement-container" *ngIf="chargement">
+    <div class="spinner-large"></div>
+  </div>
+
+  <div *ngIf="!chargement">
+
+    <!-- ================================================
+      SECTION 1 : Résumé trimestriel
+    ================================================ -->
+    <div class="stats-section" *ngIf="statsTrimestriel">
+      <h2>Trimestre {{ trimestreSelectionne }} - {{ anneeSelectionnee }}</h2>
+
+      <div class="stats-cartes-grille">
+        <!-- Total tâches -->
+        <div class="stat-carte-detail">
+          <div class="stat-nombre">{{ statsTrimestriel.taches.total }}</div>
+          <div class="stat-lib">Total des tâches</div>
+        </div>
+        <!-- Terminées -->
+        <div class="stat-carte-detail success">
+          <div class="stat-nombre">{{ statsTrimestriel.taches.terminees }}</div>
+          <div class="stat-lib">Terminées</div>
+        </div>
+        <!-- Dans les délais -->
+        <div class="stat-carte-detail info">
+          <div class="stat-nombre">{{ statsTrimestriel.taches.dans_delais }}</div>
+          <div class="stat-lib">Dans les délais</div>
+        </div>
+        <!-- Pourcentage -->
+        <div class="stat-carte-detail" [ngClass]="getClassePourcentage(statsTrimestriel.performance.pourcentage_dans_delais)">
+          <div class="stat-nombre">{{ statsTrimestriel.performance.pourcentage_dans_delais }}%</div>
+          <div class="stat-lib">Taux de respect</div>
+        </div>
+      </div>
+
+      <!-- Barre de progression visuelle -->
+      <div class="progression-visuelle">
+        <div class="progression-label">
+          <span>Progression du trimestre</span>
+          <span>{{ statsTrimestriel.performance.pourcentage_completion }}%</span>
+        </div>
+        <div class="barre-progression grande">
+          <div class="barre-remplissage"
+               [style.width]="statsTrimestriel.performance.pourcentage_completion + '%'"
+               [class.bonne]="statsTrimestriel.performance.pourcentage_completion >= 90"
+               [class.moyenne]="statsTrimestriel.performance.pourcentage_completion >= 50 && statsTrimestriel.performance.pourcentage_completion < 90"
+               [class.faible]="statsTrimestriel.performance.pourcentage_completion < 50">
+          </div>
+        </div>
+      </div>
+
+      <!-- Prime du trimestre (professeurs uniquement) -->
+      <div class="prime-section" *ngIf="estProfesseur && statsTrimestriel.prime">
+        <h3>Prime de ce trimestre</h3>
+        <div class="prime-affichage" [ngClass]="getClassePrime(statsTrimestriel.prime)">
+          <div class="prime-medaille">
+            {{ statsTrimestriel.prime.eligible_100k ? 'Prime max' : statsTrimestriel.prime.eligible_30k ? 'Prime partielle' : 'Aucune' }}
+          </div>
+          <div class="prime-detail">
+            <div class="prime-montant">
+              {{ statsTrimestriel.prime.prime > 0 ? (statsTrimestriel.prime.prime | number:'1.0-0') + ' FCFA' : 'Pas de prime' }}
+            </div>
+            <div class="prime-explication">
+              <ng-container *ngIf="statsTrimestriel.prime.eligible_100k">
+                100% des tâches dans les délais → Prime maximale
+              </ng-container>
+              <ng-container *ngIf="statsTrimestriel.prime.eligible_30k && !statsTrimestriel.prime.eligible_100k">
+                ≥ 90% des tâches dans les délais → Prime partielle
+              </ng-container>
+              <ng-container *ngIf="!statsTrimestriel.prime.eligible_30k">
+                Moins de 90% des tâches dans les délais ({{ statsTrimestriel.prime.pourcentage }}%)
+              </ng-container>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================================================
+      SECTION 2 : Bilan annuel
+    ================================================ -->
+    <div class="stats-section" *ngIf="statsAnnuelles">
+      <h2>Bilan annuel {{ anneeSelectionnee }}</h2>
+
+      <!-- Résumé annuel -->
+      <div class="resume-annuel">
+        <div class="resume-item">
+          <span class="resume-valeur">{{ statsAnnuelles.resume_annuel.total_taches }}</span>
+          <span class="resume-label">Tâches au total</span>
+        </div>
+        <div class="resume-separateur">|</div>
+        <div class="resume-item">
+          <span class="resume-valeur">{{ statsAnnuelles.resume_annuel.terminees }}</span>
+          <span class="resume-label">Terminées</span>
+        </div>
+        <div class="resume-separateur">|</div>
+        <div class="resume-item">
+          <span class="resume-valeur success">{{ statsAnnuelles.resume_annuel.pourcentage_global }}%</span>
+          <span class="resume-label">Taux global</span>
+        </div>
+        <div class="resume-separateur" *ngIf="estProfesseur">|</div>
+        <div class="resume-item" *ngIf="estProfesseur && statsAnnuelles.resume_annuel.prime_totale_annee !== null">
+          <span class="resume-valeur prime">{{ (statsAnnuelles.resume_annuel.prime_totale_annee || 0) | number:'1.0-0' }} FCFA</span>
+          <span class="resume-label">Prime totale</span>
+        </div>
+      </div>
+
+      <!-- Tableau trimestriel -->
+      <div class="tableau-trimestriel">
+        <table class="tableau">
+          <thead>
+            <tr>
+              <th>Trimestre</th>
+              <th>Période</th>
+              <th>Total tâches</th>
+              <th>Terminées</th>
+              <th>Dans les délais</th>
+              <th>Taux</th>
+              <th *ngIf="estProfesseur">Prime</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let t of statsAnnuelles.par_trimestre"
+                [class.trimestre-actif]="t.trimestre === trimestreSelectionne">
+              <td><strong>T{{ t.trimestre }}</strong></td>
+              <td class="texte-gris">{{ t.date_debut | date:'MMM' }} - {{ t.date_fin | date:'MMM yyyy' }}</td>
+              <td>{{ t.total_taches }}</td>
+              <td>{{ t.terminees }}</td>
+              <td>{{ t.dans_delais }}</td>
+              <td>
+                <span class="badge-taux" [ngClass]="getClasseTaux(t.pourcentage_delais)">
+                  {{ t.pourcentage_delais }}%
+                </span>
+              </td>
+              <td *ngIf="estProfesseur && t.prime">
+                <span class="badge-prime"
+                      [class.prime-or]="t.prime.eligible_100k"
+                      [class.prime-argent]="t.prime.eligible_30k && !t.prime.eligible_100k"
+                      [class.prime-vide]="!t.prime.eligible_30k">
+                  {{ t.prime.prime > 0 ? (t.prime.prime | number:'1.0-0') + ' FCFA' : '—' }}
+                </span>
+              </td>
+            </tr>
+          </tbody>
+          <tfoot *ngIf="estProfesseur">
+            <tr>
+              <td colspan="6" class="total-label">Total annuel</td>
+              <td>
+                <strong class="prime-totale">
+                  {{ calculerPrimeTotale() | number:'1.0-0' }} FCFA
+                </strong>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <!-- ================================================
+      SECTION 3 : Classement professeurs (Primes)
+    ================================================ -->
+    <div class="stats-section" *ngIf="estProfesseur && evaluationProfs">
+      <div class="section-header">
+        <h2>Classement des professeurs - T{{ trimestreSelectionne }} {{ anneeSelectionnee }}</h2>
+        <div class="regles-primes">
+          <span class="regle">100% → 100 000 FCFA</span>
+          <span class="regle">≥90% → 30 000 FCFA</span>
+        </div>
+      </div>
+
+      <div class="classement-liste">
+        <div
+          class="classement-item"
+          *ngFor="let eval of evaluationProfs.evaluation_professeurs; let i = index"
+          [class.top-1]="i === 0"
+          [class.top-2]="i === 1"
+          [class.top-3]="i === 2"
+        >
+          <!-- Rang -->
+          <div class="rang">
+            {{ i + 1 }}
+          </div>
+
+          <!-- Profil professeur -->
+          <img [src]="eval.professeur.avatar" [alt]="eval.professeur.nom" class="avatar-classement" />
+          <div class="classement-info">
+            <div class="prof-nom">{{ eval.professeur.nom }}</div>
+            <div class="prof-dept texte-gris">{{ eval.professeur.departement || 'ESMT' }}</div>
+          </div>
+
+          <!-- Statistiques -->
+          <div class="classement-stats">
+            <span>{{ eval.taches_terminees }} tâches</span>
+            <span class="texte-gris">{{ eval.dans_delais }} dans les délais</span>
+          </div>
+
+          <!-- Barre progression -->
+          <div class="classement-progression">
+            <div class="barre-progression">
+              <div class="barre-remplissage"
+                   [style.width]="eval.pourcentage_dans_delais + '%'"
+                   [class.bonne]="eval.pourcentage_dans_delais >= 90"
+                   [class.moyenne]="eval.pourcentage_dans_delais >= 50 && eval.pourcentage_dans_delais < 90"
+                   [class.faible]="eval.pourcentage_dans_delais < 50">
+              </div>
+            </div>
+            <span class="pourcentage-classement">{{ eval.pourcentage_dans_delais }}%</span>
+          </div>
+
+          <!-- Prime -->
+          <div class="classement-prime">
+            <span class="badge-prime"
+                  [class.prime-or]="eval.prime.eligible_100k"
+                  [class.prime-argent]="eval.prime.eligible_30k && !eval.prime.eligible_100k"
+                  [class.prime-vide]="!eval.prime.eligible_30k">
+              {{ eval.prime.prime > 0 ? (eval.prime.prime | number:'1.0-0') + ' FCFA' : 'Pas de prime' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Message si aucun résultat -->
+        <div class="etat-vide" *ngIf="evaluationProfs.evaluation_professeurs.length === 0">
+          <p>Aucune donnée disponible pour ce trimestre.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

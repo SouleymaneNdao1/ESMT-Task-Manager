@@ -1,0 +1,157 @@
+<!-- ============================================================
+  ESMT Task Manager - Tableau de Bord
+============================================================ -->
+
+<!-- Etat de chargement -->
+<div class="chargement-container" *ngIf="chargement">
+  <div class="spinner-large"></div>
+</div>
+
+<!-- Message d'erreur -->
+<div class="alert alert-erreur" *ngIf="erreur && !chargement">
+  {{ erreur }}
+  <button class="btn btn-sm btn-secondaire" (click)="chargerDonnees()">Reessayer</button>
+</div>
+
+<!-- Contenu principal du tableau de bord -->
+<div class="dashboard-container" *ngIf="!chargement && !erreur">
+
+  <!-- En-tete de bienvenue avec animation -->
+  <header class="dashboard-hero">
+    <div class="hero-content">
+      <div class="hero-text">
+        <span class="hero-greeting">{{ salutation }},</span>
+        <h1 class="hero-name">{{ utilisateur?.first_name }} {{ utilisateur?.last_name }}</h1>
+        <p class="hero-description">
+          {{ estProfesseur 
+            ? 'Pilotez vos projets et suivez l\'excellence de vos étudiants.' 
+            : 'Restez organisé et atteignez vos objectifs académiques.' 
+          }}
+        </p>
+      </div>
+      <div class="hero-visual">
+        <div class="role-badge" [class.prof]="estProfesseur">
+          {{ estProfesseur ? 'Expert Académique' : 'Étudiant ESMT' }}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Section Statistiques Dynamiques -->
+  <section class="stats-overview" *ngIf="statistiques">
+    <div class="stat-glass-card">
+      <div class="stat-icon-box blue">📁</div>
+      <div class="stat-details">
+        <div class="stat-number">{{ statistiques.nombre_projets }}</div>
+        <div class="stat-label">Projets Actifs</div>
+      </div>
+    </div>
+
+    <div class="stat-glass-card">
+      <div class="stat-icon-box purple">📝</div>
+      <div class="stat-details">
+        <div class="stat-number">{{ statistiques.taches.total }}</div>
+        <div class="stat-label">Tâches Totales</div>
+      </div>
+    </div>
+
+    <div class="stat-glass-card">
+      <div class="stat-icon-box green">✅</div>
+      <div class="stat-details">
+        <div class="stat-number">{{ statistiques.taches.terminees }}</div>
+        <div class="stat-label">Complétées</div>
+      </div>
+    </div>
+
+    <div class="stat-glass-card danger" *ngIf="statistiques.taches.en_retard > 0">
+      <div class="stat-icon-box red">⚠️</div>
+      <div class="stat-details">
+        <div class="stat-number">{{ statistiques.taches.en_retard }}</div>
+        <div class="stat-label">En Retard</div>
+      </div>
+    </div>
+
+    <div class="stat-glass-card" *ngIf="estProfesseur">
+      <div class="stat-icon-box cyan">👨‍🎓</div>
+      <div class="stat-details">
+        <div class="stat-number">{{ statistiques.nombre_etudiants }}</div>
+        <div class="stat-label">Étudiants Suivis</div>
+      </div>
+    </div>
+
+    <div class="stat-glass-card performance" *ngIf="!estProfesseur && statistiques.performance">
+      <div class="stat-details">
+        <div class="performance-ring">
+          <span class="perf-val">{{ statistiques.performance!.pourcentage_dans_delais }}%</span>
+        </div>
+        <div class="stat-label">Score de Respect des Délais</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Grille de Contenu Interactive -->
+  <div class="dashboard-main-grid">
+
+    <!-- Colonne Gauche: Projets -->
+    <section class="dashboard-section section-projets">
+      <div class="section-top">
+        <h2>Derniers Projets</h2>
+        <button routerLink="/projets" class="btn-text">Explorer tout →</button>
+      </div>
+
+      <div class="projets-mini-list" *ngIf="projetsRecents.length > 0">
+        <div class="projet-mini-item" 
+             *ngFor="let projet of projetsRecents"
+             [style.border-left-color]="projet.couleur"
+             [routerLink]="['/projets', projet.id]">
+          <div class="projet-mini-header">
+            <h3>{{ projet.titre }}</h3>
+            <span class="projet-date">{{ projet.date_creation | date:'dd/MM' }}</span>
+          </div>
+          <div class="projet-mini-progress">
+             <div class="mini-bar">
+               <div class="mini-fill" [style.width]="projet.progression + '%'" [style.background]="projet.couleur"></div>
+             </div>
+             <span class="mini-percent">{{ projet.progression }}%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="empty-state-card" *ngIf="projetsRecents.length === 0">
+        <p>Aucun projet en vue.</p>
+        <button class="btn btn-primaire btn-sm" routerLink="/projets" *ngIf="estProfesseur">+ Créer</button>
+      </div>
+    </section>
+
+    <!-- Colonne Droite: Alertes & Tâches -->
+    <section class="dashboard-section section-alerts">
+      <div class="section-top">
+        <h2>Alertes & Urgences</h2>
+      </div>
+
+      <div class="alerts-stack" *ngIf="tachesUrgentes.length > 0">
+        <div class="alert-item urgent" 
+             *ngFor="let tache of tachesUrgentes"
+             [routerLink]="['/taches', tache.id]">
+          <div class="alert-indicator"></div>
+          <div class="alert-body">
+            <div class="alert-title">{{ tache.titre }}</div>
+            <div class="alert-meta">
+              <span>{{ tache.priorite }}</span>
+              <span class="dot"></span>
+              <span class="alert-days">{{ -tache.jours_restants }}j de retard</span>
+            </div>
+          </div>
+          <img *ngIf="tache.assigne_a" [src]="tache.assigne_a.avatar_url" class="alert-avatar" />
+        </div>
+      </div>
+
+      <div class="success-celebration" *ngIf="tachesUrgentes.length === 0">
+        <div class="celebration-icon">🎯</div>
+        <h3>Toutes les échéances sont respectées !</h3>
+        <p>Excellent travail de gestion.</p>
+      </div>
+    </section>
+
+  </div>
+</div>

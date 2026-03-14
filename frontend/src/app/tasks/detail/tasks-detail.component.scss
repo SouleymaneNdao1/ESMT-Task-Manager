@@ -1,0 +1,121 @@
+/* ============================================================
+   ESMT Task Manager - Détail Tâche 
+   ============================================================ */
+
+.tache-detail-page {
+  max-width: 1200px;
+}
+
+.page-header {
+  background: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 30px;
+  box-shadow: var(--shadow-premium);
+  border: 1px solid var(--gris-moyen);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+  padding: 30px 40px;
+
+  h1 {
+    font-size: 2.2rem;
+    font-weight: 800;
+    letter-spacing: -1px;
+  }
+}
+
+.infos-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.info-item {
+  background: rgba(var(--esmt-bleu-fonce), 0.05);
+  backdrop-filter: blur(10px);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  border-left: 3px solid var(--primary);
+
+  .info-label {
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+  }
+
+  .info-val {
+    font-size: 1.1rem;
+    color: #fff;
+    font-weight: 700;
+  }
+}
+
+.section {
+  background: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 30px;
+  box-shadow: var(--shadow-premium);
+  border: 1px solid var(--gris-moyen);
+  margin-bottom: 30px;
+
+  h3 {
+    color: var(--accent);
+    font-size: 1.2rem;
+    margin-bottom: 15px;
+  }
+
+  .texte {
+    color: var(--text-main);
+    line-height: 1.7;
+  }
+}
+
+.commentaires-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.commentaire {
+  background: #ffffff;
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  box-shadow: var(--shadow-premium);
+  border: 1px solid var(--gris-moyen);
+  background: rgba(255, 255, 255, 0.02);
+  padding: 20px;
+  border: 1px solid var(--glass-border);
+
+  &:hover {
+    border-color: var(--primary);
+  }
+
+  .commentaire-texte {
+    color: #fff;
+    line-height: 1.6;
+  }
+
+  .commentaire-meta strong {
+    color: var(--accent);
+  }
+}
+
+.commentaire-form {
+  textarea {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--glass-border);
+    border-radius: 12px;
+    color: #fff;
+    padding: 15px;
+    width: 100%;
+
+    &:focus {
+      border-color: var(--accent);
+      outline: none;
+    }
+  }
+}

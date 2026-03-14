@@ -1,0 +1,212 @@
+<!-- ============================================================
+  ESMT Task Manager - Détail d'une Tâche
+============================================================ -->
+<div class="tache-detail-page">
+
+  <!-- Chargement -->
+  <div class="chargement-container" *ngIf="chargement">
+    <div class="spinner-large"></div>
+  </div>
+
+  <!-- Erreur -->
+  <div class="alert alert-erreur" *ngIf="!chargement && erreur">
+    {{ erreur }}
+  </div>
+
+  <!-- Contenu -->
+  <div *ngIf="!chargement && !erreur && tache">
+    <div class="page-header">
+      <div class="header-left">
+        <button class="btn btn-outline btn-sm" (click)="retour()">← Retour</button>
+        <div class="header-titres">
+          <h1>{{ tache.titre }}</h1>
+          <p>
+            Projet :
+            <a [routerLink]="['/projets', projet?.id || tache.projet]">
+              {{ projet?.titre || ('Projet #' + tache.projet) }}
+            </a>
+          </p>
+        </div>
+      </div>
+
+      <div class="header-actions">
+        <span class="badge" [ngClass]="classeStatut(tache.statut)">
+          {{ libelleStatut(tache.statut) }}
+        </span>
+        <span class="badge" [ngClass]="'badge-' + tache.priorite.toLowerCase()">
+          {{ tache.priorite }}
+        </span>
+        <button class="btn btn-secondaire btn-sm" *ngIf="estProfesseur" (click)="toggleEdition()">
+          {{ modeEdition ? 'Fermer' : 'Modifier' }}
+        </button>
+      </div>
+    </div>
+
+    <!-- Infos -->
+    <div class="carte">
+      <div class="infos-grille">
+        <div class="info-item">
+          <div class="info-label">Assigné à</div>
+          <div class="info-val">
+            <ng-container *ngIf="tache.assigne_a; else nonAssignee">
+              <img [src]="tache.assigne_a?.avatar_url" class="avatar-mini" [alt]="tache.assigne_a?.nom_complet" />
+              <span>{{ tache.assigne_a?.nom_complet }}</span>
+            </ng-container>
+            <ng-template #nonAssignee>
+              <span class="texte-gris">Non assignée</span>
+            </ng-template>
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">Deadline</div>
+          <div class="info-val" [class.en-retard]="tache.est_en_retard">
+            {{ tache.date_limite | date:'dd/MM/yyyy HH:mm' }}
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">Jours restants</div>
+          <div class="info-val" [class.en-retard]="tache.jours_restants < 0 && tache.statut !== 'TERMINE'">
+            {{ tache.statut === 'TERMINE' ? '—' : tache.jours_restants }}
+          </div>
+        </div>
+
+        <div class="info-item">
+          <div class="info-label">Créée par</div>
+          <div class="info-val">{{ tache.cree_par?.nom_complet }}</div>
+        </div>
+      </div>
+
+      <div class="section" *ngIf="tache.description">
+        <h3>Description</h3>
+        <p class="texte">{{ tache.description }}</p>
+      </div>
+
+      <div class="section" *ngIf="tache.etiquettes_liste?.length">
+        <h3>Étiquettes</h3>
+        <div class="tache-etiquettes">
+          <span class="etiquette" *ngFor="let tag of tache.etiquettes_liste">{{ tag }}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Statut -->
+    <div class="carte" *ngIf="peutChangerStatut">
+      <div class="section-header">
+        <h2>Statut</h2>
+      </div>
+
+      <div class="alert alert-success" *ngIf="messageSuccesStatut">{{ messageSuccesStatut }}</div>
+      <div class="alert alert-erreur" *ngIf="messageErreurStatut">{{ messageErreurStatut }}</div>
+
+      <div class="statut-actions">
+        <select class="filtre-select" [ngModel]="tache.statut" (ngModelChange)="changerStatut($event)">
+          <option *ngFor="let s of statuts" [value]="s.value">{{ s.label }}</option>
+        </select>
+        <span class="texte-gris" *ngIf="tache.statut === 'TERMINE' && tache.termine_dans_delais !== null">
+          {{ tache.termine_dans_delais ? 'Terminée dans les délais' : 'Terminée en retard' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Edition (professeur) -->
+    <div class="carte" *ngIf="estProfesseur && modeEdition">
+      <div class="section-header">
+        <h2>Modifier la tâche</h2>
+      </div>
+
+      <div class="alert alert-success" *ngIf="messageSuccesEdition">{{ messageSuccesEdition }}</div>
+      <div class="alert alert-erreur" *ngIf="messageErreurEdition">{{ messageErreurEdition }}</div>
+
+      <form [formGroup]="formulaireEdition" (ngSubmit)="sauvegarderEdition()">
+        <div class="champ-groupe">
+          <label>Titre *</label>
+          <input type="text" formControlName="titre" />
+        </div>
+
+        <div class="champ-groupe">
+          <label>Description</label>
+          <textarea rows="3" formControlName="description"></textarea>
+        </div>
+
+        <div class="champs-ligne">
+          <div class="champ-groupe">
+            <label>Priorité</label>
+            <select formControlName="priorite">
+              <option *ngFor="let p of priorites" [value]="p.value">{{ p.label }}</option>
+            </select>
+          </div>
+
+          <div class="champ-groupe">
+            <label>Date limite *</label>
+            <input type="datetime-local" formControlName="date_limite" />
+          </div>
+        </div>
+
+        <div class="champ-groupe">
+          <label>Assigner à (étudiant)</label>
+          <select formControlName="assigne_a_id">
+            <option [ngValue]="null">Non assigné</option>
+            <option *ngFor="let e of etudiantsProjet" [ngValue]="e.id">{{ e.nom_complet }}</option>
+          </select>
+          <div class="texte-gris" *ngIf="etudiantsProjet.length === 0">
+            Aucun étudiant membre du projet.
+          </div>
+        </div>
+
+        <div class="champ-groupe">
+          <label>Étiquettes</label>
+          <input type="text" formControlName="etiquettes" placeholder="frontend, design, urgent" />
+        </div>
+
+        <div class="formulaire-actions">
+          <button type="submit" class="btn btn-primaire" [disabled]="formulaireEdition.invalid || sauvegardeEdition">
+            <span class="spinner" *ngIf="sauvegardeEdition"></span>
+            {{ sauvegardeEdition ? 'Sauvegarde...' : 'Enregistrer' }}
+          </button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Commentaires -->
+    <div class="carte">
+      <div class="section-header commentaires-header">
+        <h2>Commentaires</h2>
+        <span class="texte-gris">{{ commentaires.length }}</span>
+      </div>
+
+      <div class="etat-vide" *ngIf="commentaires.length === 0">
+        <p>Aucun commentaire pour le moment.</p>
+      </div>
+
+      <div class="commentaires-liste" *ngIf="commentaires.length > 0">
+        <div class="commentaire" *ngFor="let c of commentaires">
+          <img [src]="c.auteur?.avatar_url" class="avatar-mini" [alt]="c.auteur?.nom_complet" />
+          <div class="commentaire-contenu">
+            <div class="commentaire-meta">
+              <strong>{{ c.auteur?.nom_complet }}</strong>
+              <span class="texte-gris">{{ c.date_creation | date:'dd/MM/yyyy HH:mm' }}</span>
+            </div>
+            <div class="commentaire-texte">{{ c.contenu }}</div>
+          </div>
+        </div>
+      </div>
+
+      <form [formGroup]="formulaireCommentaire" (ngSubmit)="envoyerCommentaire()" class="commentaire-form">
+        <div class="champ-groupe">
+          <label>Ajouter un commentaire</label>
+          <textarea rows="3" formControlName="contenu" placeholder="Écrire un message..."></textarea>
+        </div>
+        <div class="alert alert-erreur" *ngIf="messageErreurCommentaire">{{ messageErreurCommentaire }}</div>
+        <div class="formulaire-actions">
+          <button type="submit" class="btn btn-primaire" [disabled]="formulaireCommentaire.invalid || envoiCommentaire">
+            <span class="spinner" *ngIf="envoiCommentaire"></span>
+            {{ envoiCommentaire ? 'Envoi...' : 'Publier' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+

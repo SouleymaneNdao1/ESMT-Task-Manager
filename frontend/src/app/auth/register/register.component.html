@@ -1,0 +1,167 @@
+<!-- ============================================================
+  ESMT Task Manager - Page d'Inscription (Formulaire 2 etapes)
+============================================================ -->
+<div class="auth-container">
+
+  <!-- En-tete ESMT -->
+  <div class="auth-header">
+    <img src="assets/images/esmt-logo.png" alt="Logo ESMT" class="auth-logo" />
+    <h1 class="auth-title">ESMT Task Manager</h1>
+    <p class="auth-subtitle">Creer votre compte</p>
+  </div>
+
+  <!-- Carte d'inscription -->
+  <div class="auth-card" style="max-width: 480px;">
+
+    <!-- Indicateur d'etapes -->
+    <div class="etapes-indicateur">
+      <div class="etape" [class.actif]="etapeCourante >= 1" [class.complete]="etapeCourante > 1">
+        <div class="etape-cercle">{{ etapeCourante > 1 ? 'OK' : '1' }}</div>
+        <div class="etape-label">Informations</div>
+      </div>
+      <div class="etape-ligne" [class.complete]="etapeCourante > 1"></div>
+      <div class="etape" [class.actif]="etapeCourante >= 2">
+        <div class="etape-cercle">2</div>
+        <div class="etape-label">Compte</div>
+      </div>
+    </div>
+
+    <!-- Messages -->
+    <div class="alert alert-erreur" *ngIf="messageErreur">
+      {{ messageErreur }}
+    </div>
+    <div class="alert alert-success" *ngIf="messageSucces">
+      {{ messageSucces }}
+    </div>
+
+    <form [formGroup]="formulaire" (ngSubmit)="onSoumettre()">
+
+      <!-- ===================== ETAPE 1 : Informations personnelles ===================== -->
+      <div class="etape-contenu" *ngIf="etapeCourante === 1">
+        <h2>Vos informations</h2>
+
+        <!-- Prenom et Nom cote a cote -->
+        <div class="champs-ligne">
+          <div class="champ-groupe" [class.invalide]="champInvalide('prenom')">
+            <label>Prenom</label>
+            <div class="champ-input">
+              <input type="text" formControlName="prenom" placeholder="Moussa" />
+            </div>
+            <span class="erreur-message" *ngIf="champInvalide('prenom')">Prenom requis</span>
+          </div>
+
+          <div class="champ-groupe" [class.invalide]="champInvalide('nom')">
+            <label>Nom</label>
+            <div class="champ-input">
+              <input type="text" formControlName="nom" placeholder="Diallo" />
+            </div>
+            <span class="erreur-message" *ngIf="champInvalide('nom')">Nom requis</span>
+          </div>
+        </div>
+
+        <!-- Email -->
+        <div class="champ-groupe" [class.invalide]="champInvalide('email')">
+          <label>Email institutionnel</label>
+          <div class="champ-input">
+            <input type="email" formControlName="email" placeholder="m.diallo@esmt.sn" />
+          </div>
+          <span class="erreur-message" *ngIf="champInvalide('email')">Email invalide</span>
+        </div>
+
+        <!-- Nom d'utilisateur -->
+        <div class="champ-groupe" [class.invalide]="champInvalide('username')">
+          <label>Nom d'utilisateur</label>
+          <div class="champ-input">
+            <input type="text" formControlName="username" placeholder="moussa_diallo" />
+          </div>
+          <span class="erreur-message" *ngIf="champInvalide('username')">
+            3 caracteres min, lettres/chiffres/underscore uniquement
+          </span>
+        </div>
+
+        <button type="button" class="btn btn-primaire" (click)="etapeSuivante()">
+          Continuer
+        </button>
+      </div>
+
+      <!-- ===================== ETAPE 2 : Role et securite ===================== -->
+      <div class="etape-contenu" *ngIf="etapeCourante === 2">
+        <h2>Votre profil</h2>
+
+        <!-- Choix du role -->
+        <div class="role-choix">
+          <label class="role-option" [class.selectionne]="formulaire.value.role === 'ETUDIANT'">
+            <input type="radio" formControlName="role" value="ETUDIANT" />
+            <div class="role-titre">Etudiant</div>
+            <div class="role-desc">Je suis etudiant a l'ESMT</div>
+          </label>
+
+          <label class="role-option" [class.selectionne]="formulaire.value.role === 'PROFESSEUR'">
+            <input type="radio" formControlName="role" value="PROFESSEUR" />
+            <div class="role-titre">Professeur</div>
+            <div class="role-desc">Je suis enseignant a l'ESMT</div>
+          </label>
+        </div>
+
+        <!-- Departement -->
+        <div class="champ-groupe">
+          <label>Departement / Specialite</label>
+          <div class="champ-input">
+            <select formControlName="departement">
+              <option value="">Selectionner...</option>
+              <option *ngFor="let dept of departements" [value]="dept">{{ dept }}</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Mot de passe -->
+        <div class="champ-groupe" [class.invalide]="champInvalide('mot_de_passe')">
+          <label>Mot de passe</label>
+          <div class="champ-input">
+            <input [type]="afficherMdp ? 'text' : 'password'"
+                   formControlName="mot_de_passe" placeholder="8 caracteres minimum" />
+            <button type="button" class="toggle-mdp" (click)="afficherMdp = !afficherMdp">
+              {{ afficherMdp ? 'Masquer' : 'Afficher' }}
+            </button>
+          </div>
+          <span class="erreur-message" *ngIf="champInvalide('mot_de_passe')">
+            Minimum 8 caracteres
+          </span>
+        </div>
+
+        <!-- Confirmation -->
+        <div class="champ-groupe" [class.invalide]="champInvalide('confirmation_mot_de_passe') || motsDePasNonIdentiques">
+          <label>Confirmer le mot de passe</label>
+          <div class="champ-input">
+            <input [type]="afficherConfirmMdp ? 'text' : 'password'"
+                   formControlName="confirmation_mot_de_passe" placeholder="Repeter le mot de passe" />
+            <button type="button" class="toggle-mdp" (click)="afficherConfirmMdp = !afficherConfirmMdp">
+              {{ afficherConfirmMdp ? 'Masquer' : 'Afficher' }}
+            </button>
+          </div>
+          <span class="erreur-message" *ngIf="motsDePasNonIdentiques">
+            Les mots de passe ne correspondent pas
+          </span>
+        </div>
+
+        <!-- Boutons navigation -->
+        <div class="btn-groupe">
+          <button type="button" class="btn btn-secondaire" (click)="etapePrecedente()">
+            Retour
+          </button>
+          <button type="submit" class="btn btn-primaire" [disabled]="chargement || formulaire.invalid">
+            <span class="spinner" *ngIf="chargement"></span>
+            {{ chargement ? 'Creation...' : "Creer mon compte" }}
+          </button>
+        </div>
+      </div>
+    </form>
+
+    <!-- Lien connexion -->
+    <p class="auth-lien">
+      Deja un compte ? <a routerLink="/connexion" class="lien-primaire">Se connecter</a>
+    </p>
+  </div>
+
+  <p class="auth-footer">2026 Ecole Superieure Multinationale des Telecommunications</p>
+</div>

@@ -1,0 +1,50 @@
+.page-register {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  padding: 20px;
+}
+
+.register-container {
+  @extend .carte;
+  width: 100%;
+  max-width: 550px;
+  padding: 40px;
+}
+
+.step-indicator {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 30px;
+  .step {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    background: #f0f4f8;
+    color: var(--text-muted);
+    &.active { background: var(--primary); color: #fff; }
+    &.completed { background: var(--success); color: #fff; }
+  }
+}
+
+.role-selector {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 15px;
+  margin-bottom: 25px;
+  .role-option {
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: var(--transition);
+    &:hover { border-color: var(--primary); }
+    &.selected { border-color: var(--primary); background: #f0f7ff; .role-label { color: var(--primary); } }
+    .role-label { font-weight: 800; font-size: 0.9rem; }
+  }
+}

@@ -1,0 +1,83 @@
+<!-- ============================================================
+  ESMT Task Manager - Page de Connexion
+============================================================ -->
+<div class="auth-container">
+  <!-- Logo et titre -->
+  <div class="auth-header">
+    <img src="assets/images/esmt-logo.png" alt="Logo ESMT" class="auth-logo" />
+    <h1 class="auth-title">ESMT Task Manager</h1>
+    <p class="auth-subtitle">Gestion collaborative des taches</p>
+  </div>
+
+  <!-- Carte de connexion -->
+  <div class="auth-card">
+    <h2>Connexion</h2>
+
+    <!-- Message d'erreur -->
+    <div class="alert alert-erreur" *ngIf="messageErreur">
+      {{ messageErreur }}
+    </div>
+
+    <!-- Formulaire de connexion -->
+    <form [formGroup]="formulaireConnexion" (ngSubmit)="onSoumettre()" class="auth-form">
+
+      <!-- Champ Email -->
+      <div class="champ-groupe" [class.invalide]="champInvalide('email')">
+        <label for="email">Adresse email</label>
+        <div class="champ-input">
+          <input
+            id="email"
+            type="email"
+            formControlName="email"
+            placeholder="votre@esmt.sn"
+            autocomplete="email"
+          />
+        </div>
+        <span class="erreur-message" *ngIf="champInvalide('email')">
+          Adresse email invalide
+        </span>
+      </div>
+
+      <!-- Champ Mot de passe -->
+      <div class="champ-groupe" [class.invalide]="champInvalide('password')">
+        <label for="password">Mot de passe</label>
+        <div class="champ-input">
+          <input
+            id="password"
+            [type]="afficherMdp ? 'text' : 'password'"
+            formControlName="password"
+            placeholder="********"
+            autocomplete="current-password"
+          />
+          <button type="button" class="toggle-mdp" (click)="afficherMdp = !afficherMdp">
+            {{ afficherMdp ? 'Masquer' : 'Afficher' }}
+          </button>
+        </div>
+        <span class="erreur-message" *ngIf="champInvalide('password')">
+          Mot de passe requis
+        </span>
+      </div>
+
+      <!-- Bouton de connexion -->
+      <button
+        type="submit"
+        class="btn btn-primaire"
+        [disabled]="formulaireConnexion.invalid || chargement"
+      >
+        <span class="spinner" *ngIf="chargement"></span>
+        {{ chargement ? 'Connexion en cours...' : 'Se connecter' }}
+      </button>
+    </form>
+
+    <!-- Lien vers l'inscription -->
+    <p class="auth-lien">
+      Pas encore de compte ?
+      <a routerLink="/inscription" class="lien-primaire">Creer un compte</a>
+    </p>
+  </div>
+
+  <!-- Footer ESMT -->
+  <p class="auth-footer">
+    2026 Ecole Superieure Multinationale des Telecommunications
+  </p>
+</div>

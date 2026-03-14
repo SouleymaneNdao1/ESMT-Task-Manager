@@ -1,0 +1,32 @@
+# ============================================================
+#   ESMT Task Manager - Dépendances Python
+#   Compatible Python 3.11, 3.12, 3.13, 3.14
+# ============================================================
+
+# Framework principal Django
+Django>=4.2,<5.2
+
+# API REST
+djangorestframework>=3.14.0
+
+# Authentification JWT
+djangorestframework-simplejwt>=5.3.1
+
+# CORS pour Angular
+django-cors-headers>=4.3.1
+
+# Authentification avancée
+django-allauth>=0.61.1
+
+# Traitement des images - version compatible Python 3.14
+Pillow>=10.4.0
+
+# Tests unitaires
+pytest-django>=4.7.0
+pytest>=7.4.4
+
+# Variables d'environnement (.env)
+python-decouple>=3.8
+
+# PostgreSQL (optionnel - décommentez si vous n'utilisez pas SQLite)
+# psycopg2-binary>=2.9.9

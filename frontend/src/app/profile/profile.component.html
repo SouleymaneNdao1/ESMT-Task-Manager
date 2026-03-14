@@ -1,0 +1,121 @@
+<!-- ============================================================
+  ESMT Task Manager - Page Profil Utilisateur
+============================================================ -->
+<div class="profil-page">
+  <div class="profil-contenu" *ngIf="utilisateur">
+
+    <!-- Carte profil principal -->
+    <div class="profil-carte">
+      <!-- Bannière -->
+      <div class="profil-banniere" [style.background]="utilisateur.role === 'PROFESSEUR' ? 'linear-gradient(135deg, #1a3a6b, #2d6bc4)' : 'linear-gradient(135deg, #3cb878, #4dd68c)'">
+        <div class="profil-avatar-zone">
+          <img [src]="utilisateur.avatar_url" [alt]="utilisateur.nom_complet" class="profil-avatar" />
+          <label class="btn-changer-avatar" title="Changer l'avatar">
+            Changer
+            <input type="file" accept="image/*" (change)="changerAvatar($event)" hidden />
+          </label>
+        </div>
+      </div>
+
+      <!-- Informations -->
+      <div class="profil-info-zone">
+        <h1>{{ utilisateur.nom_complet }}</h1>
+        <span class="badge-role">
+          {{ utilisateur.role === 'PROFESSEUR' ? 'Professeur' : 'Etudiant' }}
+        </span>
+        <p class="profil-email">{{ utilisateur.email }}</p>
+        <p class="profil-dept" *ngIf="utilisateur.departement">
+          {{ utilisateur.departement }}
+        </p>
+        <p class="profil-bio" *ngIf="utilisateur.bio">{{ utilisateur.bio }}</p>
+
+        <!-- Stats rapides -->
+        <div class="profil-stats">
+          <div class="profil-stat">
+            <span class="profil-stat-nb">{{ utilisateur.nombre_projets || 0 }}</span>
+            <span class="profil-stat-lib">{{ utilisateur.role === 'PROFESSEUR' ? 'Projets créés' : 'Cours suivis' }}</span>
+          </div>
+          <div class="profil-stat">
+            <span class="profil-stat-nb">{{ utilisateur.nombre_taches || 0 }}</span>
+            <span class="profil-stat-lib">Tâches</span>
+          </div>
+          <div class="profil-stat">
+            <span class="profil-stat-nb">{{ utilisateur.last_login ? (utilisateur.last_login | date:'dd/MM/yy') : '—' }}</span>
+            <span class="profil-stat-lib">Dernière connexion</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Formulaires de modification -->
+    <div class="profil-formulaires">
+
+      <!-- Modifier les informations -->
+      <div class="carte">
+        <h2>Modifier mes informations</h2>
+        <div class="alert alert-success" *ngIf="messageSuccesInfo">{{ messageSuccesInfo }}</div>
+        <div class="alert alert-erreur" *ngIf="messageErreurInfo">{{ messageErreurInfo }}</div>
+
+        <form [formGroup]="formulaireInfo" (ngSubmit)="sauvegarderInfo()" class="formulaire-profil">
+          <div class="champs-ligne">
+            <div class="champ-groupe">
+              <label>Prénom</label>
+              <input type="text" formControlName="first_name" />
+            </div>
+            <div class="champ-groupe">
+              <label>Nom</label>
+              <input type="text" formControlName="last_name" />
+            </div>
+          </div>
+          <div class="champ-groupe">
+            <label>Département / Spécialité</label>
+            <input type="text" formControlName="departement"
+                   placeholder="Ex: Informatique et Réseaux" />
+          </div>
+          <div class="champ-groupe">
+            <label>Biographie</label>
+            <textarea formControlName="bio" rows="3"
+                      placeholder="Quelques mots sur vous..."></textarea>
+          </div>
+          <div class="formulaire-actions">
+            <button type="submit" class="btn btn-primaire" [disabled]="sauvegarde">
+              <span class="spinner" *ngIf="sauvegarde"></span>
+              {{ sauvegarde ? 'Sauvegarde...' : 'Enregistrer' }}
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Changer le mot de passe -->
+      <div class="carte">
+        <h2>Changer mon mot de passe</h2>
+        <div class="alert alert-success" *ngIf="messageSuccesMdp">{{ messageSuccesMdp }}</div>
+        <div class="alert alert-erreur" *ngIf="messageErreurMdp">{{ messageErreurMdp }}</div>
+
+        <form [formGroup]="formulaireMdp" (ngSubmit)="changerMotDePasse()" class="formulaire-profil">
+          <div class="champ-groupe">
+            <label>Mot de passe actuel</label>
+            <input type="password" formControlName="ancien_mot_de_passe"
+                   placeholder="Votre mot de passe actuel" />
+          </div>
+          <div class="champ-groupe">
+            <label>Nouveau mot de passe</label>
+            <input type="password" formControlName="nouveau_mot_de_passe"
+                   placeholder="Minimum 8 caractères" />
+          </div>
+          <div class="champ-groupe">
+            <label>Confirmer le nouveau mot de passe</label>
+            <input type="password" formControlName="confirmation_nouveau_mot_de_passe"
+                   placeholder="Répéter le nouveau mot de passe" />
+          </div>
+          <div class="formulaire-actions">
+            <button type="submit" class="btn btn-primaire" [disabled]="formulaireMdp.invalid || sauvegardeMdp">
+              <span class="spinner" *ngIf="sauvegardeMdp"></span>
+              {{ sauvegardeMdp ? 'Modification...' : 'Changer le mot de passe' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>

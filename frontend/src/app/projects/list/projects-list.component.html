@@ -1,0 +1,238 @@
+<!-- ============================================================
+  ESMT Task Manager - Liste des Projets (Style Google Classroom)
+============================================================ -->
+<div class="projets-page">
+
+  <!-- En-tête avec filtres -->
+  <div class="page-header">
+    <div>
+      <h1>{{ estProfesseur ? 'Mes Projets' : 'Mes Cours' }}</h1>
+      <p>{{ projets.length }} projet(s) au total</p>
+    </div>
+    <div class="header-actions">
+      <!-- Barre de recherche -->
+      <div class="recherche-input">
+        <input type="text" [(ngModel)]="recherche" (input)="filtrerProjets()"
+               placeholder="Rechercher un projet..." />
+      </div>
+      <!-- Filtre statut -->
+      <select class="filtre-select" [(ngModel)]="filtreStatut" (change)="filtrerProjets()">
+        <option value="">Tous les statuts</option>
+        <option value="EN_COURS">En cours</option>
+        <option value="TERMINE">Terminé</option>
+        <option value="ARCHIVE">Archivé</option>
+      </select>
+      <!-- Bouton créer (professeur seulement) -->
+      <button class="btn btn-primaire" *ngIf="estProfesseur" (click)="ouvrirModal()">
+        Nouveau projet
+      </button>
+    </div>
+  </div>
+
+  <!-- Chargement -->
+  <div class="chargement-container" *ngIf="chargement">
+    <div class="spinner-large"></div>
+  </div>
+
+  <!-- Message vide -->
+  <div class="etat-vide" *ngIf="!chargement && projetsFiltres.length === 0">
+    <p>{{ estProfesseur ? "Aucun projet créé pour le moment." : "Vous n'êtes membre d'aucun projet." }}</p>
+    <button class="btn btn-primaire" *ngIf="estProfesseur" (click)="ouvrirModal()">
+      Creer mon premier projet
+    </button>
+  </div>
+
+  <!-- Grille des projets -->
+  <div class="projets-grille" *ngIf="!chargement && projetsFiltres.length > 0">
+    <div class="projet-carte"
+         *ngFor="let projet of projetsFiltres"
+         (click)="voirProjet(projet.id)">
+
+      <!-- En-tête avec Bannière -->
+      <div class="projet-header" [style.background]="projet.couleur || 'linear-gradient(135deg, #1a3a6b, #2d6bc4)'">
+        <div class="projet-header-top">
+          <span class="badge-statut-pill" [class]="'statut-' + projet.statut.toLowerCase()">
+            {{ getLibelleStatut(projet.statut) }}
+          </span>
+          <span class="badge-statut-pill statut-danger" *ngIf="projet.est_urgent">
+            URGENT
+          </span>
+          <!-- Menu actions (professeur) -->
+          <div class="projet-actions-overlay" *ngIf="estProfesseur" (click)="$event.stopPropagation()">
+            <button class="action-icon" title="Editer" (click)="editerProjet(projet)">✎</button>
+            <button class="action-icon" title="Ajouter étudiant" (click)="ouvrirModalMembre(projet)">👤+</button>
+            <button class="action-icon danger" title="Supprimer" (click)="supprimerProjet(projet)">🗑</button>
+          </div>
+        </div>
+        <div class="projet-titre">{{ projet.titre }}</div>
+      </div>
+
+      <!-- Corps -->
+      <div class="projet-body">
+        <div class="projet-description">
+          {{ projet.description || 'Aucune description fournie pour ce projet.' }}
+        </div>
+
+        <div class="projet-meta-grid">
+          <div class="meta-item">
+            <span class="meta-label">Créateur</span>
+            <div class="meta-valeur-user">
+              <img [src]="projet.createur.avatar_url" [alt]="projet.createur.nom_complet" />
+              <span>{{ estProfesseur ? 'Moi' : 'Prof. ' + projet.createur.last_name }}</span>
+            </div>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Échéance</span>
+            <span class="meta-valeur" [class.urgent]="projet.est_urgent">
+              {{ projet.date_fin_prevue ? (projet.date_fin_prevue | date:'dd MMM yyyy') : 'Indéterminée' }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Barre de progression -->
+        <div class="projet-progression-container">
+          <div class="progression-info">
+            <span>Avancement global</span>
+            <span class="progression-pourcent">{{ projet.progression }}%</span>
+          </div>
+          <div class="barre-progression-piste">
+            <div class="barre-remplissage-animee" 
+                 [style.width]="projet.progression + '%'"
+                 [style.background]="projet.progression >= 100 ? 'var(--success)' : 'var(--primary)'">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pied -->
+      <div class="projet-footer-stats">
+        <div class="stat-group">
+          <span class="stat-count">{{ projet.nombre_taches }}</span>
+          <span class="stat-label">Tâches</span>
+        </div>
+        <div class="stat-separator"></div>
+        <div class="stat-group">
+          <span class="stat-count success">{{ projet.nombre_taches_terminees }}</span>
+          <span class="stat-label">Terminées</span>
+        </div>
+        <div class="stat-separator"></div>
+        <div class="stat-group">
+          <span class="stat-count">{{ projet.nombre_membres }}</span>
+          <span class="stat-label">Étudiants</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================
+    MODAL : Créer / Modifier un projet
+  =================================================== -->
+  <div class="modal-overlay" *ngIf="modalOuverte" (click)="fermerModal()">
+    <div class="modal-contenu" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>{{ projetEdition ? 'Modifier le projet' : 'Nouveau projet' }}</h3>
+        <button class="btn-fermer" (click)="fermerModal()">X</button>
+      </div>
+
+      <form [formGroup]="formulaire" (ngSubmit)="sauvegarderProjet()">
+        <div class="modal-body">
+          <!-- Titre -->
+          <div class="champ-groupe">
+            <label>Titre du projet *</label>
+            <input type="text" formControlName="titre" placeholder="Ex: Développement App Mobile" />
+            <div class="champ-erreur" *ngIf="formulaire.get('titre')?.touched && formulaire.get('titre')?.invalid">
+              <span *ngIf="formulaire.get('titre')?.errors?.['required']">Titre obligatoire.</span>
+              <span *ngIf="formulaire.get('titre')?.errors?.['minlength']">Minimum 3 caractères.</span>
+              <span *ngIf="formulaire.get('titre')?.errors?.['maxlength']">Maximum 80 caractères.</span>
+            </div>
+          </div>
+
+          <!-- Description -->
+          <div class="champ-groupe">
+            <label>Description</label>
+            <textarea formControlName="description" rows="3"
+                      placeholder="Décrivez l'objectif du projet..."></textarea>
+          </div>
+
+          <!-- Dates côte à côte -->
+          <div class="champs-ligne">
+            <div class="champ-groupe">
+              <label>Date de début *</label>
+              <input type="date" formControlName="date_debut" />
+            </div>
+            <div class="champ-groupe">
+              <label>Date de fin prévue</label>
+              <input type="date" formControlName="date_fin_prevue" [min]="formulaire.value.date_debut" />
+            </div>
+          </div>
+
+          <div class="champ-erreur" *ngIf="formulaire.touched && formulaire.errors?.['dates_invalides']">
+            La date de fin doit être supérieure ou égale à la date de début.
+          </div>
+
+          <!-- Couleur et statut -->
+          <div class="champs-ligne">
+            <div class="champ-groupe">
+              <label>Couleur du projet</label>
+              <div class="couleurs-palette">
+                <div class="couleur-option"
+                     *ngFor="let c of couleursDisponibles"
+                     [style.background]="c"
+                     [class.selectionne]="formulaire.value.couleur === c"
+                     (click)="formulaire.patchValue({couleur: c})">
+                </div>
+              </div>
+            </div>
+            <div class="champ-groupe">
+              <label>Statut</label>
+              <select formControlName="statut">
+                <option value="EN_COURS">En cours</option>
+                <option value="TERMINE">Terminé</option>
+                <option value="ARCHIVE">Archivé</option>
+                <option value="SUSPENDU">Suspendu</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondaire" (click)="fermerModal()">Annuler</button>
+          <button type="submit" class="btn btn-primaire" [disabled]="formulaire.invalid || sauvegarde">
+            <span class="spinner" *ngIf="sauvegarde"></span>
+            {{ sauvegarde ? 'Sauvegarde...' : (projetEdition ? 'Modifier' : 'Créer le projet') }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- ===================================================
+    MODAL : Ajouter un étudiant par email ESMT
+  =================================================== -->
+  <div class="modal-overlay" *ngIf="modalMembreOuverte" (click)="fermerModalMembre()">
+    <div class="modal-contenu" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Ajouter un etudiant</h3>
+        <button class="btn-fermer" (click)="fermerModalMembre()">X</button>
+      </div>
+
+      <div class="modal-body">
+        <div class="champ-groupe">
+          <label>Email ESMT de l'etudiant</label>
+          <input type="email" name="emailMembre" [(ngModel)]="emailMembre" [ngModelOptions]="{standalone: true}" placeholder="exemple@esmt.sn" />
+        </div>
+
+        <div class="alert alert-success" *ngIf="messageSuccesMembre">{{ messageSuccesMembre }}</div>
+        <div class="alert alert-erreur" *ngIf="messageErreurMembre">{{ messageErreurMembre }}</div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondaire" (click)="fermerModalMembre()">Annuler</button>
+        <button type="button" class="btn btn-primaire" [disabled]="ajoutMembre" (click)="ajouterMembreParEmail()">
+          <span class="spinner" *ngIf="ajoutMembre"></span>
+          {{ ajoutMembre ? 'Ajout...' : 'Ajouter' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

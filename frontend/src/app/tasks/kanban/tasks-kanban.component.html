@@ -1,0 +1,323 @@
+<!-- ============================================================
+  ESMT Task Manager - Vue Kanban des Tâches
+============================================================ -->
+<div class="taches-page">
+
+  <!-- En-tête avec filtres -->
+  <div class="page-header">
+    <div>
+      <h1>Mes Taches</h1>
+      <p>{{ tachesFiltrees.length }} tâche(s) affichée(s) • {{ tachesToutes.length }} au total</p>
+    </div>
+    <div class="header-actions">
+      <!-- Recherche -->
+      <div class="recherche-input">
+        <input
+          type="text"
+          [(ngModel)]="recherche"
+          (input)="onRechercheInput()"
+          placeholder="Rechercher (titre, description, tags)..."
+        />
+      </div>
+      <!-- Filtre projet -->
+      <select class="filtre-select" [(ngModel)]="filtreProjet" (change)="onFiltresChanged()">
+        <option [ngValue]="''">Tous les projets</option>
+        <option *ngFor="let p of projetsDisponibles" [ngValue]="p.id">{{ p.titre }}</option>
+      </select>
+      <!-- Filtre priorité -->
+      <select class="filtre-select" [(ngModel)]="filtrePriorite" (change)="onFiltresChanged()">
+        <option value="">Toutes priorités</option>
+        <option value="URGENTE">Urgente</option>
+        <option value="HAUTE">Haute</option>
+        <option value="NORMALE">Normale</option>
+        <option value="BASSE">Basse</option>
+      </select>
+      <!-- Filtre assigné à (professeur) -->
+      <select class="filtre-select" [(ngModel)]="filtreAssigneA" (change)="onFiltresChanged()" *ngIf="estProfesseur">
+        <option [ngValue]="''">Tous les étudiants</option>
+        <option *ngFor="let e of etudiants" [ngValue]="e.id">{{ e.nom_complet }}</option>
+      </select>
+
+      <!-- Toggles -->
+      <label class="toggle-filtre">
+        <input type="checkbox" [(ngModel)]="filtreEnRetard" (change)="onFiltresChanged()" />
+        En retard
+      </label>
+      <label class="toggle-filtre">
+        <input type="checkbox" [(ngModel)]="filtreEcheance" (change)="onFiltresChanged()" />
+        Échéance ≤ {{ echeanceJours }}j
+      </label>
+
+      <button class="btn btn-outline btn-sm" (click)="reinitialiserFiltres()">
+        Réinitialiser
+      </button>
+      <!-- Bouton créer (Tous les membres) -->
+      <button class="btn btn-primaire" (click)="ouvrirModalTache()">
+        Nouvelle tache
+      </button>
+    </div>
+  </div>
+
+  <!-- Chargement -->
+  <div class="chargement-container" *ngIf="chargement">
+    <div class="spinner-large"></div>
+  </div>
+
+  <!-- Erreur -->
+  <div class="alert alert-erreur" *ngIf="!chargement && erreur">
+    {{ erreur }}
+  </div>
+
+  <!-- Vue Kanban -->
+  <div class="etat-vide" *ngIf="!chargement && !erreur && tachesFiltrees.length === 0">
+    <p>Aucune tâche ne correspond à vos filtres.</p>
+    <div class="header-actions">
+      <button class="btn btn-outline btn-sm" (click)="reinitialiserFiltres()">
+        Réinitialiser les filtres
+      </button>
+      <button class="btn btn-primaire btn-sm" *ngIf="estProfesseur" (click)="ouvrirModalTache()">
+        Créer une tâche
+      </button>
+    </div>
+  </div>
+
+  <div class="kanban-container" *ngIf="!chargement && !erreur && tachesFiltrees.length > 0">
+
+    <!-- Colonne : À faire -->
+    <div class="kanban-colonne">
+      <div class="colonne-header">
+        <div class="colonne-titre">
+          <span class="point-statut" style="background: #6c757d;"></span>
+          À faire
+        </div>
+        <span class="colonne-compte">{{ getTachesParStatut('A_FAIRE').length }}</span>
+      </div>
+      <div *ngFor="let tache of getTachesParStatut('A_FAIRE')">
+        <div class="tache-carte" [class.en-retard]="tache.est_en_retard"
+             (click)="voirTache(tache)">
+          <div class="tache-priorite-bande" [style.background]="getCouleurPriorite(tache.priorite)"></div>
+          <div class="tache-titre">{{ tache.titre }}</div>
+          <div class="tache-description" *ngIf="tache.description">{{ tache.description }}</div>
+          <div class="tache-etiquettes" *ngIf="tache.etiquettes_liste.length > 0">
+            <span class="etiquette" *ngFor="let tag of tache.etiquettes_liste">{{ tag }}</span>
+          </div>
+          <div class="tache-footer">
+            <span class="tache-date" [class.en-retard]="tache.est_en_retard">
+              {{ tache.est_en_retard ? 'En retard' : (tache.date_limite | date:'dd/MM') }}
+            </span>
+            <div class="tache-footer-droite">
+              <span class="badge" [ngClass]="'badge-' + tache.priorite.toLowerCase()">{{ tache.priorite }}</span>
+              <img *ngIf="tache.assigne_a" [src]="tache.assigne_a.avatar_url"
+                   [title]="tache.assigne_a.nom_complet" class="tache-assignee" />
+            </div>
+          </div>
+          <!-- Actions rapides étudiant -->
+          <div class="tache-actions" *ngIf="!estProfesseur && tache.assigne_a?.id === utilisateurId"
+               (click)="$event.stopPropagation()">
+            <button class="btn btn-sm btn-outline" (click)="changerStatut(tache, 'EN_COURS')">
+              ▶ Démarrer
+            </button>
+          </div>
+        </div>
+      </div>
+      <!-- Bouton ajouter tâche (Tous les membres) -->
+      <button class="btn-ajouter-tache" (click)="ouvrirModalTache()">
+        + Ajouter une tâche
+      </button>
+    </div>
+
+    <!-- Colonne : En cours -->
+    <div class="kanban-colonne">
+      <div class="colonne-header">
+        <div class="colonne-titre">
+          <span class="point-statut" style="background: #007bff;"></span>
+          En cours
+        </div>
+        <span class="colonne-compte">{{ getTachesParStatut('EN_COURS').length }}</span>
+      </div>
+      <div *ngFor="let tache of getTachesParStatut('EN_COURS')">
+        <div class="tache-carte" [class.en-retard]="tache.est_en_retard"
+             (click)="voirTache(tache)">
+          <div class="tache-priorite-bande" [style.background]="getCouleurPriorite(tache.priorite)"></div>
+          <div class="tache-titre">{{ tache.titre }}</div>
+          <div class="tache-description" *ngIf="tache.description">{{ tache.description }}</div>
+          <div class="tache-footer">
+            <span class="tache-date" [class.en-retard]="tache.est_en_retard">
+              {{ tache.est_en_retard ? 'En retard' : (tache.date_limite | date:'dd/MM') }}
+            </span>
+            <div class="tache-footer-droite">
+              <span class="badge" [ngClass]="'badge-' + tache.priorite.toLowerCase()">{{ tache.priorite }}</span>
+              <img *ngIf="tache.assigne_a" [src]="tache.assigne_a.avatar_url"
+                   [title]="tache.assigne_a.nom_complet" class="tache-assignee" />
+            </div>
+          </div>
+          <div class="tache-actions" *ngIf="!estProfesseur && tache.assigne_a?.id === utilisateurId"
+               (click)="$event.stopPropagation()">
+            <button class="btn btn-sm btn-success" (click)="changerStatut(tache, 'TERMINE')">
+              Terminer
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne : En révision -->
+    <div class="kanban-colonne">
+      <div class="colonne-header">
+        <div class="colonne-titre">
+          <span class="point-statut" style="background: #fd7e14;"></span>
+          En révision
+        </div>
+        <span class="colonne-compte">{{ getTachesParStatut('EN_REVISION').length }}</span>
+      </div>
+      <div *ngFor="let tache of getTachesParStatut('EN_REVISION')">
+        <div class="tache-carte" (click)="voirTache(tache)">
+          <div class="tache-priorite-bande" [style.background]="getCouleurPriorite(tache.priorite)"></div>
+          <div class="tache-titre">{{ tache.titre }}</div>
+          <div class="tache-footer">
+            <span class="tache-date">{{ tache.date_limite | date:'dd/MM' }}</span>
+            <img *ngIf="tache.assigne_a" [src]="tache.assigne_a.avatar_url" class="tache-assignee" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne : Terminé -->
+    <div class="kanban-colonne">
+      <div class="colonne-header">
+        <div class="colonne-titre">
+          <span class="point-statut" style="background: #28a745;"></span>
+          Termine
+        </div>
+        <span class="colonne-compte">{{ getTachesParStatut('TERMINE').length }}</span>
+      </div>
+      <div *ngFor="let tache of getTachesParStatut('TERMINE')">
+        <div class="tache-carte terminee" (click)="voirTache(tache)">
+          <div class="tache-titre">{{ tache.titre }}</div>
+          <div class="tache-footer">
+            <span class="badge badge-termine">✓ Terminé</span>
+            <span class="tache-date"
+                  [style.color]="tache.termine_dans_delais ? 'var(--success)' : 'var(--danger)'">
+              {{ tache.termine_dans_delais ? 'Dans les delais' : 'En retard' }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Colonne : Annulé -->
+    <div class="kanban-colonne">
+      <div class="colonne-header">
+        <div class="colonne-titre">
+          <span class="point-statut" style="background: #dc3545;"></span>
+          Annulé
+        </div>
+        <span class="colonne-compte">{{ getTachesParStatut('ANNULE').length }}</span>
+      </div>
+      <div *ngFor="let tache of getTachesParStatut('ANNULE')">
+        <div class="tache-carte annulee" (click)="voirTache(tache)">
+          <div class="tache-titre">{{ tache.titre }}</div>
+          <div class="tache-footer">
+            <span class="badge badge-annule">✕ Annulé</span>
+            <img *ngIf="tache.assigne_a" [src]="tache.assigne_a.avatar_url" class="tache-assignee" />
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================
+    MODAL : Créer une tâche
+  =================================================== -->
+  <div class="modal-overlay" *ngIf="modalTacheOuverte" (click)="fermerModalTache()">
+    <div class="modal-contenu" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h3>Nouvelle tache</h3>
+        <button class="btn-fermer" (click)="fermerModalTache()">X</button>
+      </div>
+
+      <form [formGroup]="formulaireTache" (ngSubmit)="creerTache()">
+        <div class="modal-body">
+          <!-- Alerte erreur locale au modal -->
+          <div class="alert alert-erreur" *ngIf="erreur" style="margin-bottom: 20px;">
+            {{ erreur }}
+          </div>
+          <div class="champ-groupe">
+            <label>Titre *</label>
+            <input type="text" formControlName="titre" 
+                   [class.is-invalid]="formulaireTache.get('titre')?.invalid && formulaireTache.get('titre')?.touched"
+                   placeholder="Ex: Concevoir les maquettes UI" />
+            <div class="feedback-erreur" *ngIf="formulaireTache.get('titre')?.invalid && formulaireTache.get('titre')?.touched">
+              <span *ngIf="formulaireTache.get('titre')?.errors?.['required']">Le titre est obligatoire.</span>
+              <span *ngIf="formulaireTache.get('titre')?.errors?.['minlength']">Minimum 3 caractères.</span>
+            </div>
+          </div>
+          <div class="champ-groupe">
+            <label>Description</label>
+            <textarea formControlName="description" rows="3"
+                      placeholder="Instructions détaillées..."></textarea>
+          </div>
+          <div class="champs-ligne">
+            <div class="champ-groupe">
+              <label>Projet *</label>
+              <select formControlName="projet" [class.is-invalid]="formulaireTache.get('projet')?.invalid && formulaireTache.get('projet')?.touched">
+                <option [ngValue]="null">Sélectionner un projet</option>
+                <option *ngFor="let p of projetsDisponibles" [ngValue]="p.id">{{ p.titre }}</option>
+              </select>
+              <div class="feedback-erreur" *ngIf="formulaireTache.get('projet')?.invalid && formulaireTache.get('projet')?.touched">
+                Le projet est obligatoire.
+              </div>
+              <div class="alert alert-info alert-sm" style="margin-top: 10px;" *ngIf="projetsDisponibles.length === 0">
+                Aucun projet trouvé. Veuillez d'abord <a routerLink="/projets" (click)="fermerModalTache()">créer un projet</a>.
+              </div>
+            </div>
+            <div class="champ-groupe">
+              <label>Assigner à (étudiant)</label>
+              <select formControlName="assigne_a">
+                <option [ngValue]="null">Non assigné</option>
+                <option *ngFor="let e of etudiantsProjetCreation" [ngValue]="e.id">{{ e.nom_complet }}</option>
+              </select>
+              <div class="texte-gris" *ngIf="!formulaireTache.get('projet')?.value">
+                Sélectionnez d'abord un projet pour voir ses membres.
+              </div>
+              <div class="texte-gris" *ngIf="formulaireTache.get('projet')?.value && etudiantsProjetCreation.length === 0">
+                Aucun étudiant membre de ce projet.
+              </div>
+            </div>
+          </div>
+          <div class="champs-ligne">
+            <div class="champ-groupe">
+              <label>Priorité</label>
+              <select formControlName="priorite">
+                <option value="BASSE">Basse</option>
+                <option value="NORMALE">Normale</option>
+                <option value="HAUTE">Haute</option>
+                <option value="URGENTE">Urgente</option>
+              </select>
+            </div>
+            <div class="champ-groupe">
+              <label>Date limite *</label>
+              <input type="datetime-local" formControlName="date_limite" 
+                     [class.is-invalid]="formulaireTache.get('date_limite')?.invalid && formulaireTache.get('date_limite')?.touched" />
+              <div class="feedback-erreur" *ngIf="formulaireTache.get('date_limite')?.invalid && formulaireTache.get('date_limite')?.touched">
+                La date limite est obligatoire.
+              </div>
+            </div>
+          </div>
+          <div class="champ-groupe">
+            <label>Étiquettes</label>
+            <input type="text" formControlName="etiquettes"
+                   placeholder="frontend, design, urgent (séparées par virgules)" />
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondaire" (click)="fermerModalTache()">Annuler</button>
+          <button type="button" class="btn btn-primaire" (click)="creerTache()">
+            <span class="spinner" *ngIf="sauvegarde"></span>
+            {{ sauvegarde ? 'Création...' : 'Créer la tâche' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>

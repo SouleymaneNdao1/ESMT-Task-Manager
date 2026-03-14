@@ -1,0 +1,208 @@
+.stats-page {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 40px;
+
+  h1 { 
+    font-size: 2.2rem; 
+    font-weight: 800; 
+    color: var(--esmt-bleu-fonce);
+    background: linear-gradient(120deg, var(--esmt-bleu-fonce), var(--esmt-cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+}
+
+.periode-filtres {
+  display: flex;
+  gap: 12px;
+  
+  .filtre-select {
+    padding: 10px 15px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--gris-moyen);
+    background: #fff;
+    font-weight: 600;
+    color: var(--text-main);
+    cursor: pointer;
+    transition: var(--transition);
+    &:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+  }
+}
+
+.stats-section {
+  background: #ffffff;
+  border-radius: var(--radius-xl);
+  padding: 30px;
+  box-shadow: var(--shadow-premium);
+  border: 1px solid var(--gris-moyen);
+  margin-bottom: 35px;
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  backdrop-filter: blur(10px);
+  background: rgba(255, 255, 255, 0.9);
+  
+  h2 { font-size: 1.8rem; font-weight: 900; color: var(--esmt-bleu-fonce); margin-bottom: 25px; border-bottom: 3px solid var(--gris-clair); padding-bottom: 15px; letter-spacing: -0.5px; }
+}
+
+.stat-cartes-grille {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.stat-carte-detail {
+  padding: 24px;
+  background: var(--bg-body);
+  border-radius: var(--radius-lg);
+  text-align: center;
+  border: 1px solid var(--gris-moyen);
+  transition: var(--transition);
+  
+  &:hover { transform: translateY(-5px); box-shadow: var(--shadow-premium); border-color: var(--primary); }
+
+  .stat-nombre { font-size: 2.4rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
+  .stat-lib { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+  &.success { .stat-nombre { color: var(--success); } }
+  &.info { .stat-nombre { color: var(--info); } }
+  &.warning { .stat-nombre { color: var(--warning); } }
+  &.danger { .stat-nombre { color: var(--danger); } }
+}
+
+.prime-section {
+  margin-top: 30px;
+  padding: 25px;
+  border-radius: var(--radius-xl);
+  background: linear-gradient(135deg, rgba(30, 77, 140, 0.05), rgba(0, 168, 204, 0.05));
+  border: 1px solid rgba(30, 77, 140, 0.1);
+
+  h3 { font-size: 1.2rem; font-weight: 800; color: var(--esmt-bleu-fonce); margin-bottom: 15px; }
+}
+
+.prime-affichage {
+  padding: 25px;
+  background: white;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-premium);
+  display: flex;
+  align-items: center;
+  gap: 25px;
+  border-left: 6px solid var(--gris-moyen);
+  transition: var(--transition);
+
+  &.prime-or { border-left-color: #fbc02d; background: linear-gradient(to right, #fffef0, #fff); }
+  &.prime-argent { border-left-color: #94a3b8; background: linear-gradient(to right, #f8fafc, #fff); }
+
+  .prime-montant { font-size: 2.5rem; font-weight: 900; color: var(--esmt-bleu-fonce); }
+  .prime-explication { color: var(--text-muted); font-weight: 500; }
+}
+
+.resume-annuel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  padding: 20px;
+  background: var(--esmt-bleu-fonce);
+  color: white;
+  border-radius: var(--radius-lg);
+  margin-bottom: 30px;
+
+  .resume-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    .resume-valeur { font-size: 1.8rem; font-weight: 800; }
+    .resume-label { font-size: 0.75rem; font-weight: 600; opacity: 0.8; text-transform: uppercase; }
+
+    &.prime .resume-valeur { color: var(--esmt-cyan); }
+  }
+  .resume-separateur { opacity: 0.3; font-size: 2rem; }
+}
+
+.badge-taux {
+  padding: 5px 12px;
+  border-radius: 20px;
+  font-weight: 800;
+  font-size: 0.8rem;
+  
+  &.taux-excellent { background: #dcfce7; color: #166534; }
+  &.taux-moyen { background: #fef9c3; color: #854d0e; }
+  &.taux-faible { background: #fee2e2; color: #991b1b; }
+}
+
+.classement-liste {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+}
+
+.classement-item {
+  display: grid;
+  grid-template-columns: 50px 60px 1fr 180px 150px;
+  align-items: center;
+  padding: 15px 25px;
+  background: white;
+  border: 1px solid var(--gris-moyen);
+  border-radius: var(--radius-lg);
+  transition: var(--transition);
+  
+  &:hover { transform: scale(1.01); box-shadow: var(--shadow-premium); border-color: var(--primary); }
+
+  &.top-1 { background: linear-gradient(to right, #fffef0, #fff); border-color: #fbc02d; .rang { color: #f9a825; } }
+  
+  .rang { font-size: 1.8rem; font-weight: 900; color: var(--gris-moyen); }
+  .avatar-classement { width: 45px; height: 45px; border-radius: 12px; object-fit: cover; }
+  .prof-nom { font-weight: 700; color: var(--text-dark); font-size: 1rem; }
+  .prof-dept { font-size: 0.8rem; font-weight: 600; }
+  
+  .classement-progression {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    width: 100%;
+    padding-right: 20px;
+  }
+}
+
+.barre-progression {
+  height: 8px;
+  background: var(--gris-clair);
+  border-radius: 4px;
+  overflow: hidden;
+  .barre-remplissage {
+    height: 100%;
+    transition: width 1s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+    background: var(--primary);
+    &.bonne { background: var(--success); }
+    &.moyenne { background: var(--warning); }
+    &.faible { background: var(--danger); }
+  }
+}
+
+.badge-prime {
+  padding: 8px 15px;
+  border-radius: 8px;
+  font-weight: 800;
+  font-size: 0.85rem;
+  display: inline-block;
+  text-align: center;
+  min-width: 110px;
+  
+  &.prime-or { background: #fbc02d; color: #fff; box-shadow: 0 4px 10px rgba(251, 192, 45, 0.3); }
+  &.prime-argent { background: #94a3b8; color: #fff; }
+  &.prime-vide { background: var(--gris-clair); color: var(--text-muted); }
+}
+

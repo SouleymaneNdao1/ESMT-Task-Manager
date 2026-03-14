@@ -1,0 +1,185 @@
+<!-- ============================================================
+  ESMT Task Manager - Détail d'un Projet (Version Premium)
+============================================================ -->
+<div class="projet-detail-container">
+
+  <!-- Chargement -->
+  <div class="loading-overlay" *ngIf="chargement">
+    <div class="spinner-premium"></div>
+  </div>
+
+  <!-- Erreur -->
+  <div class="alert alert-erreur" *ngIf="!chargement && erreur">
+    <div class="alert-icon">⚠️</div>
+    <div class="alert-body">{{ erreur }}</div>
+  </div>
+
+  <div class="content-wrapper" *ngIf="!chargement && !erreur && projet">
+    
+    <!-- Hero Header : Immersion Totale -->
+    <header class="project-hero" [style.background]="'linear-gradient(135deg, ' + (projet.couleur || 'var(--primary)') + ' 0%, var(--esmt-bleu-fonce) 100%)'">
+      <div class="hero-header-top">
+        <button class="btn-back" (click)="retour()">← Retour aux projets</button>
+        <div class="hero-actions">
+           <button class="btn-hero" (click)="allerAuKanban()">
+             <span>📊</span> Kanban
+           </button>
+           <button class="btn-hero primary" *ngIf="estCreateur" (click)="ouvrirModalMembre()">
+             <span>+</span> Ajouter Membre
+           </button>
+        </div>
+      </div>
+      
+      <div class="hero-body">
+        <div class="hero-main-info">
+          <div class="status-badge-hero">{{ getLibelleStatut(projet.statut) }}</div>
+          <h1 class="project-title">{{ projet.titre }}</h1>
+          <div class="project-meta-hero">
+            <div class="meta-item-hero">
+              <img [src]="projet.createur?.avatar_url" class="avatar-hero" />
+              <span>Prof. {{ projet.createur?.nom_complet }}</span>
+            </div>
+            <div class="meta-item-hero">
+              <span class="icon">📅</span>
+              <span>Du {{ projet.date_debut | date:'dd MMM yyyy' }} au {{ projet.date_fin_prevue | date:'dd MMM yyyy' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-stats-circle">
+           <svg viewBox="0 0 36 36" class="circular-chart">
+            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <path class="circle" [style.stroke-dasharray]="projet.progression + ', 100'" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+            <text x="18" y="20.35" class="percentage">{{ projet.progression }}%</text>
+          </svg>
+        </div>
+      </div>
+      <!-- Grille de Contenu -->
+    <div class="detail-grid">
+      
+      <!-- Colonne Gauche : Description & Equipe -->
+      <aside class="detail-aside">
+        
+        <!-- Cartes Statistiques Rapides (Visible pour tous) -->
+        <div class="quick-stats-grid">
+          <div class="q-stat-card">
+            <span class="q-val">{{ projet.nombre_taches }}</span>
+            <span class="q-lab">Tâches</span>
+          </div>
+          <div class="q-stat-card success">
+            <span class="q-val">{{ projet.nombre_taches_terminees }}</span>
+            <span class="q-lab">Finies</span>
+          </div>
+          <div class="q-stat-card warning">
+             <span class="q-val">{{ membres.length }}</span>
+             <span class="q-lab">Membres</span>
+          </div>
+        </div>
+
+        <!-- Carte Description -->
+        <section class="glass-card section-desc">
+          <div class="section-top">
+            <h2 class="section-title">Objectifs du projet</h2>
+          </div>
+          <p class="description-text">{{ projet.description || 'Aucune description disponible pour ce projet.' }}</p>
+        </section>
+
+        <!-- Carte Membres -->
+        <section class="glass-card section-members">
+          <div class="section-top">
+            <h2 class="section-title">Équipe du Projet</h2>
+          </div>
+          
+          <div class="members-list">
+            <div class="member-item" *ngFor="let m of membres">
+              <div class="member-avatar-box">
+                <img [src]="m.avatar_url" [alt]="m.nom_complet" />
+                <div class="role-indicator" [class.prof]="m.role === 'PROFESSEUR'"></div>
+              </div>
+              <div class="member-details">
+                <div class="member-name">{{ m.nom_complet }}</div>
+                <div class="member-role">{{ m.role === 'PROFESSEUR' ? 'Superviseur' : 'Étudiant' }}</div>
+              </div>
+              <button class="btn-remove" title="Retirer" *ngIf="estCreateur && m.id !== projet.createur?.id" (click)="retirerMembre(m)">✕</button>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Colonne Droite : Tâches -->
+      <main class="detail-main">
+        <section class="glass-card section-tasks">
+          <div class="section-top">
+            <h2 class="section-title">Workflow des Tâches</h2>
+            <div class="task-actions-top">
+              <button class="btn btn-primaire btn-sm" (click)="allerAuKanban(true)">
+                <span>+</span> Nouvelle Tache
+              </button>
+              <div class="task-filters">
+                <input type="text" [(ngModel)]="recherche" (input)="filtrerTaches()" placeholder="Filtrer..." class="input-search" />
+                <select [(ngModel)]="filtreStatut" (change)="filtrerTaches()" class="select-filter">
+                  <option value="">Tous les statuts</option>
+                  <option *ngFor="let s of statutsTache" [value]="s.value">{{ s.label }}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="tasks-table-wrapper">
+            <div class="task-card-item" *ngFor="let t of tachesFiltrees">
+              <div class="task-card-left">
+                <div class="priority-marker" [ngClass]="'priority-' + t.priorite.toLowerCase()"></div>
+                <div class="task-info-main" [routerLink]="['/taches', t.id]">
+                  <h4 class="task-card-title">{{ t.titre }}</h4>
+                  <div class="task-card-meta">
+                    <span class="status-pill" [ngClass]="'status-' + t.statut.toLowerCase()">{{ getLibelleStatutTache(t.statut) }}</span>
+                    <span class="date-pill" [class.overdue]="t.est_en_retard">
+                      {{ t.est_en_retard ? 'Expiré' : (t.date_limite | date:'dd MMM, HH:mm') }}
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="task-card-right">
+                <div class="assignee-box" *ngIf="t.assigne_a">
+                   <img [src]="t.assigne_a.avatar_url" [title]="t.assigne_a.nom_complet" />
+                </div>
+                <div class="no-assignee" *ngIf="!t.assigne_a">--</div>
+              </div>
+            </div>
+
+            <div class="empty-tasks" *ngIf="tachesFiltrees.length === 0">
+              <p>Aucune tâche.</p>
+            </div>
+          </div>
+        </section>
+      </main>
+    </div> <!-- .detail-grid -->
+
+    <!-- Modal : Ajout Membre -->
+    <div class="modal-overlay-premium" *ngIf="modalMembreOuverte" (click)="fermerModalMembre()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <div class="modal-header-premium">
+          <h3>Inscrire un Étudiant</h3>
+          <button class="close-btn" (click)="fermerModalMembre()">✕</button>
+        </div>
+
+        <div class="modal-body-premium">
+          <p class="modal-help">Saisissez l'adresse email ESMT de l'étudiant pour l'ajouter au projet.</p>
+          <div class="input-group-premium">
+            <input type="email" [(ngModel)]="emailMembre" placeholder="nom.prenom@esmt.sn" autofocus />
+          </div>
+          <div class="msg success" *ngIf="messageSuccesMembre">{{ messageSuccesMembre }}</div>
+          <div class="msg error" *ngIf="messageErreurMembre">{{ messageErreurMembre }}</div>
+        </div>
+
+        <div class="modal-footer-premium">
+          <button class="btn btn-cancel" (click)="fermerModalMembre()">Annuler</button>
+          <button class="btn btn-save" [disabled]="ajoutMembre || !emailMembre" (click)="ajouterMembreParEmail()">
+            {{ ajoutMembre ? 'Ajout en cours...' : 'Inscrire' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>

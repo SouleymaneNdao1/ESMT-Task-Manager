@@ -1,0 +1,149 @@
+<!-- ============================================================
+  ESMT Task Manager - Layout Principal
+============================================================ -->
+
+<!-- Pages d'authentification - Pas de layout -->
+<router-outlet *ngIf="estPageAuth || !authService.estConnecte"></router-outlet>
+
+<!-- Layout principal - Affiche quand connecte -->
+<div class="app-layout" *ngIf="!estPageAuth && authService.estConnecte">
+
+  <!-- Sidebar Desktop -->
+  <aside class="sidebar" [class.ouvert]="sidebarOuverte">
+
+    <!-- Logo ESMT + Titre -->
+    <div class="sidebar-logo">
+      <img src="assets/images/esmt-logo.png" alt="Logo ESMT" />
+      <div class="sidebar-titre">
+        ESMT<br>Task Manager
+      </div>
+    </div>
+
+    <!-- Navigation principale -->
+    <nav class="sidebar-nav">
+      <div class="nav-section">
+        <div class="nav-section-titre">Navigation</div>
+
+        <a
+          *ngFor="let item of menuItems"
+          [routerLink]="item.chemin"
+          class="nav-item"
+          [class.actif]="estActif(item.chemin)"
+        >
+          {{ item.label }}
+        </a>
+      </div>
+
+      <!-- Section Professeur uniquement -->
+      <div class="nav-section" *ngIf="authService.estProfesseur">
+        <div class="nav-section-titre">Gestion</div>
+        <a routerLink="/projets/nouveau" class="nav-item">
+          Nouveau projet
+        </a>
+        <a routerLink="/statistiques/primes" class="nav-item">
+          Evaluation primes
+        </a>
+      </div>
+    </nav>
+
+    <!-- Profil utilisateur en bas de la sidebar -->
+    <div class="sidebar-profil" [routerLink]="['/profil']">
+      <img
+        [src]="utilisateur?.avatar_url || 'assets/images/avatar-default.png'"
+        [alt]="utilisateur?.nom_complet"
+        class="avatar-mini"
+      />
+      <div class="profil-info">
+        <div class="profil-nom">{{ utilisateur?.first_name }} {{ utilisateur?.last_name }}</div>
+        <div class="profil-role">
+          {{ utilisateur?.role === 'PROFESSEUR' ? 'Professeur' : 'Etudiant' }}
+        </div>
+      </div>
+      <button class="btn-icone" (click)="seDeconnecter(); $event.stopPropagation()" title="Se deconnecter">
+        X
+      </button>
+    </div>
+  </aside>
+
+  <!-- Overlay pour fermer la sidebar mobile -->
+  <div
+    class="sidebar-overlay"
+    *ngIf="sidebarOuverte"
+    (click)="sidebarOuverte = false"
+  ></div>
+
+  <!-- Zone de contenu principal -->
+  <main class="main-content">
+
+    <!-- Barre superieure -->
+    <header class="topbar">
+      <!-- Bouton menu mobile -->
+      <button
+        class="btn-menu-mobile"
+        (click)="sidebarOuverte = !sidebarOuverte"
+      >
+        Menu
+      </button>
+
+      <!-- Titre de la page courante -->
+      <div class="topbar-titre">
+        <img src="assets/images/esmt-logo.png" alt="ESMT" class="topbar-logo" />
+        ESMT Task Manager
+      </div>
+
+      <!-- Actions de la barre superieure -->
+      <div class="topbar-actions">
+        <!-- Bouton creer (professeur) -->
+        <a
+          routerLink="/projets/nouveau"
+          class="btn btn-primaire btn-sm"
+          *ngIf="authService.estProfesseur"
+        >
+          + Nouveau projet
+        </a>
+
+        <!-- Avatar utilisateur -->
+        <div class="topbar-profil" [routerLink]="['/profil']">
+          <img
+            [src]="utilisateur?.avatar_url || 'assets/images/avatar-default.png'"
+            [alt]="utilisateur?.nom_complet"
+            class="avatar-topbar"
+          />
+        </div>
+      </div>
+    </header>
+
+    <!-- Zone de contenu de la page -->
+    <div class="content-zone">
+      <router-outlet></router-outlet>
+    </div>
+  </main>
+
+  <!-- Navbar Mobile -->
+  <nav class="navbar-mobile">
+    <!-- Item 1: Accueil -->
+    <a routerLink="/tableau-de-bord" class="nav-item-mobile" [class.actif]="estActif('/tableau-de-bord')">
+      Accueil
+    </a>
+
+    <!-- Item 2: Projets -->
+    <a routerLink="/projets" class="nav-item-mobile" [class.actif]="estActif('/projets')">
+      Projets
+    </a>
+
+    <!-- Bouton central d'action -->
+    <button class="nav-btn-central" (click)="actionCentrale()" title="Creer">
+      +
+    </button>
+
+    <!-- Item 3: Taches -->
+    <a routerLink="/taches" class="nav-item-mobile" [class.actif]="estActif('/taches')">
+      Taches
+    </a>
+
+    <!-- Item 4: Stats -->
+    <a routerLink="/statistiques" class="nav-item-mobile" [class.actif]="estActif('/statistiques')">
+      Stats
+    </a>
+  </nav>
+</div>
